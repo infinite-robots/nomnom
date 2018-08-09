@@ -1,0 +1,32 @@
+{
+  "name": "nomnom-server",
+  "version": "1.0.0",
+  "description": "Group decision maker",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/infinite-robots/nomnom.git"
+  },
+  "author": "Andrew Westwick",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/infinite-robots/nomnom/issues"
+  },
+  "homepage": "https://github.com/infinite-robots/nomnom",
+  "dependencies": {
+    "@slack/client": "^4.3.1",
+    "axios": "^0.18.0",
+    "cookie-parser": "^1.4.3",
+    "express": "^4.16.3",
+    "express-async-errors": "^3.0.0",
+    "qs": "^6.5.2",
+    "socket.io": "^2.1.1"
+  },
+  "devDependencies": {
+    "eslint": "^5.1.0"
+  }
+}
