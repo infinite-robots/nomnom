@@ -23,6 +23,7 @@
     "cookie-parser": "^1.4.3",
     "express": "^4.16.3",
     "express-async-errors": "^3.0.0",
+    "lodash": "^4.17.10",
     "qs": "^6.5.2",
     "socket.io": "^2.1.1"
   },
