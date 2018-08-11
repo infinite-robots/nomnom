@@ -10,8 +10,13 @@ const Room = require("./Room");
 
 const app = new Express();
 const server = new Server(app);
-const io = new SocketIO(server);
-io.set('origins', 'localhost:8080');
+const io = new SocketIO(server, {
+  origins: [
+    "http://www.nomnom.site:80",
+    "http://nomnom.site:80",
+    "http://localhost:8080"
+  ]
+});
 
 // JSON.parse(fs.readFileSync("env.json"));
 
