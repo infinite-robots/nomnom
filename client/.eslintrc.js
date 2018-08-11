@@ -27,6 +27,7 @@ module.exports = {
   rules: {
     'no-console': 0,
     'func-names': 0,
+    'linebreak-style': 0,
     // don't require .vue extension when importing
     'import/extensions': ['error', 'always', {
       js: 'never',

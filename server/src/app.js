@@ -15,6 +15,9 @@ io.set('origins', 'localhost:8080');
 
 // JSON.parse(fs.readFileSync("env.json"));
 
+const _ = require('lodash');
+const chars = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r',
+  's', 't','u','v','w','y','x','z','1','2','3','4','5','6','7','8','9'];
 
 app.use(bodyParser.json());
 
@@ -24,6 +27,17 @@ app.use(function(req, res, next) {
   next();
 });
 
-new Room(1, app, io);
+app.post(`/makeroom`, (req, res) => {
+  if (!req.body.user) {
+    throw new Error('No user specified');
+  }
+
+  const roomId = _.sampleSize(chars, 5).join('');
+  console.log('making room', roomId);
+
+  new Room(roomId, app, io, req.body.user);
+
+  res.send({roomId: roomId});
+});
 
 server.listen(8088);

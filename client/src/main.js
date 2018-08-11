@@ -2,12 +2,9 @@
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
 import Vue from 'vue';
 import axios from 'axios';
-import VueSocketio from 'vue-socket.io';
-
+import store from './store';
 import App from './App';
 import router from './router';
-
-Vue.use(VueSocketio, 'http://localhost:8088/rooms/1/meta');
 
 Vue.prototype.$http = axios;
 
@@ -17,6 +14,7 @@ Vue.config.productionTip = false;
 new Vue({
   el: '#app',
   router,
+  store,
   components: { App },
   template: '<App/>',
 });

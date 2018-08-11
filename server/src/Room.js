@@ -4,10 +4,13 @@ const _ = require('lodash');
 // const webhook = new IncomingWebhook('');
 
 class Room {
-  constructor(id, app, io) {
+  constructor(id, app, io, owner) {
     this._server = app;
     this._id = id;
     this._socketIO = io;
+    this._owner = owner;
+    this._users = [];
+    this._started = false;
     this._nomnoms = [
       { id: 1, name: 'Boss Lady Pizza', category: 'pizza', priceRange: 'medium', veto: false, votes: [] },
       { id: 2, name: 'Bobs Burgers', category: 'burgers', priceRange: 'low', veto: false, votes: [] },
@@ -36,7 +39,31 @@ class Room {
     this._ioRoom = ioRoom;
 
     ioRoom.on('connection', socket => {
-      socket.emit('nom', this.getCandidates());
+      socket.emit('users', this._users);
+      socket.emit('admin', this._owner);
+      if (this._started) {
+        socket.emit('start');
+      }
+
+      socket.on('join', (user) => {
+        if (!this._users.includes(user)) {
+          this._users.push(user);
+          console.log(`${user} joined`);
+          ioRoom.emit('users', this._users);
+        }
+      });
+    });
+
+    app.post(`/rooms/${id}/start`, (req, res) => {
+      if (!req.body.user) {
+        throw new Error('No user specified');
+      }
+
+      this._started = true;
+
+      if (req.body.user === this._owner) {
+        ioRoom.emit('start');
+      }
     });
 
     app.post(`/rooms/${id}/noms`, (req, res) => {
@@ -79,7 +106,7 @@ class Room {
   }
 
   checkForWinner() {
-    const winner = _.filter(this._nomnoms, (nom) => !nom.veto && nom.votes.length === 3);
+    const winner = _.filter(this._nomnoms, (nom) => !nom.veto && nom.votes.length === this._users.length);
     if (winner.length > 0) {
       this.declareWinner(winner[0]);
     }
