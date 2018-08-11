@@ -27,6 +27,10 @@ app.use(function(req, res, next) {
   next();
 });
 
+app.get('/ping', (req, res) => {
+  res.send('pong');
+});
+
 app.post(`/makeroom`, (req, res) => {
   if (!req.body.user) {
     throw new Error('No user specified');
