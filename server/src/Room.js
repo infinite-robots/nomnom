@@ -1,5 +1,3 @@
-const axios = require('axios');
-bodyParser = require('body-parser').json();
 const { IncomingWebhook } = require('@slack/client');
 const _ = require('lodash');
 // do something with this later.
@@ -32,6 +30,7 @@ class Room {
       { id: 19, name: 'Aldacos', category: 'mexican', priceRange: 'medium', veto: false, votes: [] },
       { id: 20, name: 'IHOP', category: 'breakfast/american', priceRange: 'low', veto: false, votes: [] },
     ];
+    this.users = [];
 
     const ioRoom = io.of(`/rooms/${id}/meta`);
     this._ioRoom = ioRoom;
@@ -40,48 +39,54 @@ class Room {
       socket.emit('nom', this.getCandidates());
     });
 
-    app.get(`/rooms/${id}/noms`, (req, res) => {
-      res.send(this.getCandidates());
-    });
-
-    app.post(`/rooms/${id}/vote`, bodyParser, (req, res) => {
-      console.log(req.body);
+    app.post(`/rooms/${id}/noms`, (req, res) => {
       if (!req.body.user) {
-        console.log(req.body.user);
         throw new Error('No user specified');
       }
 
-      if (!req.body.id) {
-        throw new Error('No id specified');
+      res.send(this.getCandidates(req.body.user));
+    });
+
+    app.post(`/rooms/${id}/vote`, (req, res) => {
+      if (!req.body.user || !req.body.id) {
+        throw new Error('No user or id specified');
       }
 
-      if (!req.body.up) {
-        throw new Error('No up specified');
-      }
+      this.voteForNom(req.body.user, req.body.id, req.body.yum);
+      this.checkForWinner();
 
-      this._nomnoms = _.map(this._nomnoms, nom => {
-        if (nom.id !== req.body.id) {
-          return nom
-        } else {
-          if (req.body.up === false) {
-            return _.assign({}, nom, {veto: true})
-          } else {
-            nom.votes.push(req.body.user);
-            return nom;
-          }
-        }
-      })
-
-      res.sendStatus(400);
+      res.send('ok!');
     });
   }
 
-  getCandidates() {
-    return _.filter(this._nomnoms, (nom) => nom.veto === false);
+  voteForNom(user, id, up) {
+    this._nomnoms = _.map(this._nomnoms, nom => {
+      if (nom.id !== id) {
+        return nom
+      } else {
+        if (!up) {
+          return _.assign({}, nom, {veto: true})
+        } else {
+          nom.votes.push(user);
+          return nom;
+        }
+      }
+    });
   }
 
-  getCandidatesForUser() {
-    let noms = this.getCandidates();
+  getCandidates(user) {
+    return _.sampleSize(_.filter(this._nomnoms, (nom) => nom.veto === false && !_.includes(nom.votes, user)), 5);
+  }
+
+  checkForWinner() {
+    const winner = _.filter(this._nomnoms, (nom) => !nom.veto && nom.votes.length === 3);
+    if (winner.length > 0) {
+      this.declareWinner(winner[0]);
+    }
+  }
+
+  declareWinner(winner) {
+    this._ioRoom.emit('winner', winner);
   }
 }
 
