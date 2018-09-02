@@ -1,39 +1,24 @@
-const { IncomingWebhook } = require('@slack/client');
 const _ = require('lodash');
+const axios = require("axios");
+const yelpConfig = {
+  headers: {'Authorization': 'Bearer erk_5ltstcI2uNJkTqgbZarGQ1_wv1oGfllhfMMQ9--vHIkqMuN1avy9YDkapPyT6M9_Xq8qOkrhyg8d__X2UjQ90cbegIl6ZGUiJM9TgMsKFmcKl9DkDKYScBuMW3Yx'}
+};
 // do something with this later.
 // const webhook = new IncomingWebhook('');
+// const { IncomingWebhook } = require('@slack/client');
 
 class Room {
-  constructor(id, app, io, owner) {
+  constructor(id, app, io, owner, searchLocation, searchRadius) {
     this._server = app;
     this._id = id;
     this._socketIO = io;
     this._owner = owner;
     this._users = [];
     this._started = false;
-    this._nomnoms = [
-      { id: 1, name: 'Boss Lady Pizza', category: 'pizza', priceRange: 'medium', veto: false, votes: [] },
-      { id: 2, name: 'Bobs Burgers', category: 'burgers', priceRange: 'low', veto: false, votes: [] },
-      { id: 3, name: 'Subway', category: 'sandwiches', priceRange: 'low', veto: false, votes: [] },
-      { id: 4, name: 'Sushi Zushi', category: 'sushi', priceRange: 'medium', veto: false, votes: [] },
-      { id: 5, name: 'Panda Express', category: 'chinese', priceRange: 'low', veto: false, votes: [] },
-      { id: 6, name: 'Chopstix', category: 'chinese', priceRange: 'low', veto: false, votes: [] },
-      { id: 7, name: 'Smokey Mos', category: 'bbq', priceRange: 'medium', veto: false, votes: [] },
-      { id: 8, name: 'McDonalds', category: 'fastfood', priceRange: 'low', veto: false, votes: [] },
-      { id: 9, name: 'Chipotle', category: 'mexican', priceRange: 'low', veto: false, votes: [] },
-      { id: 10, name: 'Illegal Petes', category: 'mexican', priceRange: 'low', veto: false, votes: [] },
-      { id: 11, name: 'Best Steakhouse Ever', category: 'steak', priceRange: 'high', veto: false, votes: [] },
-      { id: 12, name: 'Random Diner', category: 'american', priceRange: 'medium', veto: false, votes: [] },
-      { id: 13, name: 'In-n-out', category: 'burgers', priceRange: 'low', veto: false, votes: [] },
-      { id: 14, name: 'Thai Express', category: 'thai', priceRange: 'medium', veto: false, votes: [] },
-      { id: 15, name: 'Dominos', category: 'Pizza', priceRange: 'low', veto: false, votes: [] },
-      { id: 16, name: 'Chilis', category: 'american', priceRange: 'medium', veto: false, votes: [] },
-      { id: 17, name: 'Brazilian Steakhouse', category: 'brazilian', priceRange: 'high', veto: false, votes: [] },
-      { id: 18, name: 'Burger King', category: 'fastfood', priceRange: 'low', veto: false, votes: [] },
-      { id: 19, name: 'Aldacos', category: 'mexican', priceRange: 'medium', veto: false, votes: [] },
-      { id: 20, name: 'IHOP', category: 'breakfast/american', priceRange: 'low', veto: false, votes: [] },
-    ];
+    this._nomnoms = [];
     this.users = [];
+
+    this.setupNoms(searchLocation, searchRadius);
 
     const ioRoom = io.of(`/rooms/${id}/meta`);
     this._ioRoom = ioRoom;
@@ -114,6 +99,18 @@ class Room {
 
   declareWinner(winner) {
     this._ioRoom.emit('winner', winner);
+  }
+
+  setupNoms(searchLocation, searchRadius) {
+    const meters = 1609 * searchRadius;
+    axios.get(`https://api.yelp.com/v3/businesses/search?location=${searchLocation}&radius=${meters}&limit=50`, yelpConfig).then(resp => {
+      this._nomnoms = resp.data.businesses.map(biz => { 
+          return {veto: false, votes: [], ...biz}
+      });
+      console.log('noms set', this._nomnoms);
+    }).catch(e => {
+      console.error(e);
+    });
   }
 }
 

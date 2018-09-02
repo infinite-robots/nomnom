@@ -32,10 +32,14 @@ app.post(`/makeroom`, (req, res) => {
     throw new Error('No user specified');
   }
 
+  if (!req.body.searchLocation || !req.body.searchRadius) {
+    throw new Error('missing search location or search radius');
+  }
+
   const roomId = _.sampleSize(chars, 5).join('');
   console.log('making room', roomId);
 
-  new Room(roomId, app, io, req.body.user);
+  new Room(roomId, app, io, req.body.user, req.body.searchLocation, req.body.searchRadius);
 
   res.send({roomId: roomId});
 });
