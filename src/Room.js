@@ -1,11 +1,10 @@
 const _ = require('lodash');
 const axios = require("axios");
+const { IncomingWebhook } = require('@slack/client');
 const yelpConfig = {
   headers: {'Authorization': 'Bearer erk_5ltstcI2uNJkTqgbZarGQ1_wv1oGfllhfMMQ9--vHIkqMuN1avy9YDkapPyT6M9_Xq8qOkrhyg8d__X2UjQ90cbegIl6ZGUiJM9TgMsKFmcKl9DkDKYScBuMW3Yx'}
 };
-// do something with this later.
-// const webhook = new IncomingWebhook('');
-// const { IncomingWebhook } = require('@slack/client');
+const webhook = new IncomingWebhook('https://hooks.slack.com/services/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');
 
 class Room {
   constructor(id, app, io, owner, searchLocation, searchRadius) {
@@ -17,6 +16,8 @@ class Room {
     this._started = false;
     this._nomnoms = [];
     this.users = [];
+
+    webhook.send(`New Room created by ${owner}, location='${searchLocation}' with ID: ${id}`, () => {});
 
     this.setupNoms(searchLocation, searchRadius);
 
@@ -45,6 +46,7 @@ class Room {
       }
 
       this._started = true;
+      webhook.send(`Room ${id} is starting with ${this._nomnoms.length} options, ${this._users.length} users: ${this._users.join(', ')}`, () => {});
 
       if (req.body.user === this._owner) {
         ioRoom.emit('start');
@@ -99,15 +101,26 @@ class Room {
 
   declareWinner(winner) {
     this._ioRoom.emit('winner', winner);
+    webhook.send(`Room ${this._id} has finished. Winner: \`\`\`${JSON.stringify(winner)}\`\`\``, () => {});
   }
 
   setupNoms(searchLocation, searchRadius) {
     const meters = 1609 * searchRadius;
-    axios.get(`https://api.yelp.com/v3/businesses/search?location=${searchLocation}&radius=${meters}&limit=50`, yelpConfig).then(resp => {
-      this._nomnoms = resp.data.businesses.map(biz => { 
+    axios.get(`https://api.yelp.com/v3/businesses/search?term=restaurants&location=${searchLocation}&radius=${meters}&limit=50`, yelpConfig).then(resp => {
+      const newNoms = resp.data.businesses.map(biz => { 
           return {veto: false, votes: [], ...biz}
       });
-      console.log('noms set', this._nomnoms);
+      this._nomnoms = [...this._nomnoms, ...newNoms];
+      console.log('noms set',this._nomnoms, this._nomnoms.length);
+    }).catch(e => {
+      console.error(e);
+    });
+    axios.get(`https://api.yelp.com/v3/businesses/search?term=restaurants&location=${searchLocation}&radius=${meters}&limit=50&offset=50`, yelpConfig).then(resp => {
+      const newNoms = resp.data.businesses.map(biz => { 
+          return {veto: false, votes: [], ...biz}
+      });
+      this._nomnoms = [...this._nomnoms, ...newNoms];
+      console.log('noms set', this._nomnoms, this._nomnoms.length);
     }).catch(e => {
       console.error(e);
     });
