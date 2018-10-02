@@ -1,10 +1,11 @@
 const _ = require('lodash');
 const axios = require("axios");
 const { IncomingWebhook } = require('@slack/client');
+const settings = require('./settings');
 const yelpConfig = {
-  headers: {'Authorization': 'Bearer erk_5ltstcI2uNJkTqgbZarGQ1_wv1oGfllhfMMQ9--vHIkqMuN1avy9YDkapPyT6M9_Xq8qOkrhyg8d__X2UjQ90cbegIl6ZGUiJM9TgMsKFmcKl9DkDKYScBuMW3Yx'}
+  headers: {'Authorization': 'Bearer ' + settings.yelpBearerToken }
 };
-const webhook = new IncomingWebhook('https://hooks.slack.com/services/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');
+const webhook = new IncomingWebhook(settings.slackIncomingWebhookUrl);
 
 class Room {
   constructor(id, app, io, owner, searchLocation, searchRadius) {

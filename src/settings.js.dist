@@ -1,0 +1,4 @@
+module.exports = {
+  yelpBearerToken: 'PASTE-TOKEN-HERE',
+  slackIncomingWebhookUrl: 'https://hooks.slack.com/services/MYSLACKWEBHOOK'
+};
