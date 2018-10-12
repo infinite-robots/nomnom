@@ -8,7 +8,7 @@ Copy `src/settings.js.dist` to `src/settings.js` and enter your Yelp bearer toke
 
 Join our discord for more info: https://discord.gg/rUSdYxV
 
-## The User-interface (Frontend) 
+## Architecture 
 This project has two repositories: 
 1. The backend - you are here. 
 2. The user-interface - https://github.com/infinite-robots/nomnom-ui 
