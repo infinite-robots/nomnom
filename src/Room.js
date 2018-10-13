@@ -8,7 +8,7 @@ const yelpConfig = {
 const webhook = new IncomingWebhook(settings.slackIncomingWebhookUrl);
 
 class Room {
-  constructor(id, app, io, owner, searchLocation, searchRadius) {
+  constructor(id, app, io, owner, searchLocation, searchRadius, gpsPosition) {
     this._server = app;
     this._id = id;
     this._socketIO = io;
@@ -20,7 +20,7 @@ class Room {
 
     webhook.send(`New Room created by ${owner}, location='${searchLocation}' with ID: ${id}`, () => {});
 
-    this.setupNoms(searchLocation, searchRadius);
+    this.setupNoms(searchLocation, searchRadius, gpsPosition);
 
     const ioRoom = io.of(`/rooms/${id}/meta`);
     this._ioRoom = ioRoom;
@@ -105,10 +105,11 @@ class Room {
     webhook.send(`Room ${this._id} has finished. Winner: \`\`\`${JSON.stringify(winner)}\`\`\``, () => {});
   }
 
-  setupNoms(searchLocation, searchRadius) {
+  setupNoms(searchLocation, searchRadius, gpsPosition) {
     const meters = 1609 * searchRadius;
-    axios.get(`https://api.yelp.com/v3/businesses/search?term=restaurants&location=${searchLocation}&radius=${meters}&limit=50`, yelpConfig).then(resp => {
-      const newNoms = resp.data.businesses.map(biz => { 
+    const location = gpsPosition ? `longitude=${gpsPosition.longitude}&latitude=${gpsPosition.latitude}` : `location=${searchLocation}`;
+    axios.get(`https://api.yelp.com/v3/businesses/search?term=restaurants&radius=${meters}&limit=50&${location}`, yelpConfig).then(resp => {
+      const newNoms = resp.data.businesses.map(biz => {
           return {veto: false, votes: [], ...biz}
       });
       this._nomnoms = [...this._nomnoms, ...newNoms];
@@ -116,8 +117,8 @@ class Room {
     }).catch(e => {
       console.error(e);
     });
-    axios.get(`https://api.yelp.com/v3/businesses/search?term=restaurants&location=${searchLocation}&radius=${meters}&limit=50&offset=50`, yelpConfig).then(resp => {
-      const newNoms = resp.data.businesses.map(biz => { 
+    axios.get(`https://api.yelp.com/v3/businesses/search?term=restaurants&&radius=${meters}&limit=50&offset=50&${location}`, yelpConfig).then(resp => {
+      const newNoms = resp.data.businesses.map(biz => {
           return {veto: false, votes: [], ...biz}
       });
       this._nomnoms = [...this._nomnoms, ...newNoms];

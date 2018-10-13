@@ -48,7 +48,7 @@ app.post(`/makeroom`, (req, res) => {
   const roomId = _.sampleSize(chars, 5).join('');
   console.log('making room', roomId);
 
-  new Room(roomId, app, io, req.body.user, req.body.searchLocation, req.body.searchRadius);
+  new Room(roomId, app, io, req.body.user, req.body.searchLocation, req.body.searchRadius, req.body.gpsPosition);
 
   res.send({roomId: roomId});
 });
