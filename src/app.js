@@ -10,13 +10,32 @@ const Room = require("./Room");
 
 const app = new Express();
 const server = new Server(app);
-const io = new SocketIO(server, {
+const originSocketIO = {
   origins: [
     "http://www.nomnom.site:80",
     "http://nomnom.site:80",
-    "http://localhost:8080"
+    "http://localhost:8080",
+    "https://localhost:8443"
   ]
-});
+};
+
+//Plain SocketIO
+const io = new SocketIO(server, originSocketIO);
+
+const settings = require('./settings');
+
+// Certificate for SSL can be generated free of charge --> https://greenlock.domains/
+const privateKey = fs.readFileSync(settings.key, 'utf8');
+const certificate = fs.readFileSync(settings.cert, 'utf8');
+
+const credentials = {
+  key: privateKey,
+  cert: certificate
+};
+// Secure HTTPS
+const httpsserver = require('https').createServer(credentials, app);
+// Secure SocketIO
+const iossl = new SocketIO(httpsserver, originSocketIO);
 
 // JSON.parse(fs.readFileSync("env.json"));
 
@@ -48,9 +67,19 @@ app.post(`/makeroom`, (req, res) => {
   const roomId = _.sampleSize(chars, 5).join('');
   console.log('making room', roomId);
 
-  new Room(roomId, app, io, req.body.user, req.body.searchLocation, req.body.searchRadius);
+  // Plain SocketIO
+  // uncomment to use plain SocketIO
+  //new Room(roomId, app, io, req.body.user, req.body.searchLocation, req.body.searchRadius);
+
+  // Secure SocketIO
+  // comment to use plain SocketIO
+  new Room(roomId, app, iossl, req.body.user, req.body.searchLocation, req.body.searchRadius);
 
   res.send({roomId: roomId});
 });
 
+// Plain HTTP
 server.listen(8088);
+
+// Secure HTTPS
+httpsserver.listen(8443);
